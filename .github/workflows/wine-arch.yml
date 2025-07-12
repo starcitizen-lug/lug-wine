@@ -1,0 +1,45 @@
+name: Wine Arch Linux CI
+
+on:
+  schedule:
+    - cron:  '45 8,20 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile
+        env:
+          XDG_CACHE_HOME: /tmp/.cache
+        run: |
+          echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
+          pacman -Syu --noconfirm base-devel sudo git
+          useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          chown user -R . && cd cd wine-tkg-git/wine-tkg-git
+
+          [ -f "./wine-tkg-userpatches/"*] && rm "./wine-tkg-userpatches/"*".mypatch"
+          patches=("silence-sc-unsupported-os")
+          for file in "${patches[@]}"; do
+              cp "../../patches/wine/$file.patch" "./wine-tkg-userpatches/${file%.patch}.mypatch"
+          done
+
+          sed -i 's/wayland_driver="false"/wayland_driver="true"/' customization.cfg
+
+          sed -i 's/use_staging="true"/use_staging="false"/' customization.cfg
+          sed -i 's/use_ntsync="false"/use_ntsync="true"/' customization.cfg
+          sed -i 's/use_esync="true"/use_esync="false"/' customization.cfg
+          sed -i 's/use_fsync="true"/use_fsync="false"/' customization.cfg
+
+          sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc"/' ./wine-tkg-profiles/advanced-customization.cfg
+          
+          su user -c "yes|PKGDEST=/tmp/wine-tkg makepkg --noconfirm -s"
+
+      - name: Archive the artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wine-tkg-build
+          path: /tmp/wine-tkg
