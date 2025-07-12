@@ -14,16 +14,17 @@ jobs:
     steps:
       - name: Install Git
         run: |
-          apt update
-          apt install -y git
+          apt-get update
+          apt-get install -y git
       - uses: actions/checkout@v4
         with:
           submodules: true
       - name: Compilation
+        id: build
         shell: bash
         run: |
           dpkg --add-architecture i386 && apt update
-          apt install aptitude
+          apt-get install aptitude
           aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
           cd wine-tkg-git/wine-tkg-git
 
@@ -45,8 +46,13 @@ jobs:
           echo '_ci_build="true"' >> customization.cfg
           touch tarplz
           yes|./non-makepkg-build.sh
+
+          dir=$(find wine-tkg-git/non-makepkg-builds -maxdepth 1 -type d -name 'wine-*' -printf '%f\n')
+          lug_dirname="lug-$(echo "$dir" | cut -d. -f1-2)"
+          mv "wine-tkg-git/non-makepkg-builds/$dir" "wine-tkg-git/non-makepkg-builds/$lug_dirname"
+          echo "BUILD_DIR=$lug_dirname" >> $GITHUB_OUTPUT
       - name: Archive the artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wine-tkg-build
+          name:  ${{ steps.build.outputs.BUILD_DIR }}
           path: wine-tkg-git/non-makepkg-builds
