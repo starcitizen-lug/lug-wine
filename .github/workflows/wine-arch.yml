@@ -12,6 +12,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: Compile
         env:
           XDG_CACHE_HOME: /tmp/.cache
