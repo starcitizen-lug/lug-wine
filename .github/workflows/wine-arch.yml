@@ -19,7 +19,7 @@ jobs:
           echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
           pacman -Syu --noconfirm base-devel sudo git
           useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-          chown user -R . && cd cd wine-tkg-git/wine-tkg-git
+          chown user -R . && cd wine-tkg-git/wine-tkg-git
 
           [ -f "./wine-tkg-userpatches/"*] && rm "./wine-tkg-userpatches/"*".mypatch"
           patches=("silence-sc-unsupported-os")
