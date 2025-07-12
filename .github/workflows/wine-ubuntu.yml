@@ -10,7 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: "ubuntu:25.04"
-
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      TZ: America/Chicago
     steps:
       - name: Install Git
         run: |
