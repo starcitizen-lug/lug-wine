@@ -23,7 +23,7 @@ jobs:
           submodules: true
       - name: Compilation
         id: build
-        shell: bash
+        shell: bash {0}
         run: |
           sudo dpkg --add-architecture i386 && sudo apt-get update
           sudo apt-get install -y aptitude
