@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     container:
       image: "ubuntu:25.04"
 
@@ -21,9 +21,9 @@ jobs:
           submodules: true
       - name: Compilation
         run: |
-          sudo dpkg --add-architecture i386 && sudo apt update
-          sudo apt install aptitude
-          sudo aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
+          dpkg --add-architecture i386 && sudo apt update
+          apt install aptitude
+          aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
           cd wine-tkg-git/wine-tkg-git
 
           [ -f "./wine-tkg-userpatches/"*] && rm "./wine-tkg-userpatches/"*".mypatch"
