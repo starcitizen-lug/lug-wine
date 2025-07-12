@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           dpkg --add-architecture i386 && apt update
-          apt-get install aptitude
+          apt-get install -y aptitude
           aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
           cd wine-tkg-git/wine-tkg-git
 
