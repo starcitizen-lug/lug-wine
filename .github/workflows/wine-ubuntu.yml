@@ -21,7 +21,7 @@ jobs:
           submodules: true
       - name: Compilation
         run: |
-          dpkg --add-architecture i386 && sudo apt update
+          dpkg --add-architecture i386 && apt update
           apt install aptitude
           aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
           cd wine-tkg-git/wine-tkg-git
