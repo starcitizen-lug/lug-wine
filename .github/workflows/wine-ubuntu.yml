@@ -12,6 +12,8 @@ jobs:
     steps:
 
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: Compilation
         run: |
           sudo dpkg --add-architecture i386 && sudo apt update
@@ -19,12 +21,10 @@ jobs:
           sudo aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
           cd wine-tkg-git/wine-tkg-git
 
-          [ -d "./patches" ] && rm -r --interactive=never ./patches
           [ -f "./wine-tkg-userpatches/"*] && rm "./wine-tkg-userpatches/"*".mypatch"
-          git clone "https://github.com/starcitizen-lug/patches"
           patches=("silence-sc-unsupported-os")
           for file in "${patches[@]}"; do
-              cp "./patches/wine/$file.patch" "./wine-tkg-userpatches/${file%.patch}.mypatch"
+              cp "../../patches/wine/$file.patch" "./wine-tkg-userpatches/${file%.patch}.mypatch"
           done
 
           sed -i 's/wayland_driver="false"/wayland_driver="true"/' customization.cfg
