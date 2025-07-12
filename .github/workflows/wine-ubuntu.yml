@@ -23,6 +23,8 @@ jobs:
         shell: bash
         run: |
           dpkg --add-architecture i386 && apt update
+          apt install aptitude
+          aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
           cd wine-tkg-git/wine-tkg-git
 
           patches=("silence-sc-unsupported-os")
