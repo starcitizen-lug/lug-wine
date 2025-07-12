@@ -20,11 +20,12 @@ jobs:
         with:
           submodules: true
       - name: Compilation
+        shell: bash
         run: |
           dpkg --add-architecture i386 && apt update
           cd wine-tkg-git/wine-tkg-git
 
-          [ -f "./wine-tkg-userpatches/"*] && rm "./wine-tkg-userpatches/"*".mypatch"
+          [ -f "./wine-tkg-userpatches/"* ] && rm "./wine-tkg-userpatches/"*".mypatch"
           patches=("silence-sc-unsupported-os")
           for file in "${patches[@]}"; do
               cp "../../patches/wine/$file.patch" "./wine-tkg-userpatches/${file%.patch}.mypatch"
