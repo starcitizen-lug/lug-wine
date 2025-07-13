@@ -51,7 +51,7 @@ jobs:
 
           dir=$(find ./non-makepkg-builds -maxdepth 1 -type d -name 'wine-*' -printf '%f\n')
           lug_dirname="lug-$(echo "$dir" | cut -d. -f1-2)"
-          mv "wine-tkg-git/non-makepkg-builds/$dir" "wine-tkg-git/non-makepkg-builds/$lug_dirname"
+          mv "./non-makepkg-builds/$dir" "./non-makepkg-builds/$lug_dirname"
           echo "BUILD_DIR=$lug_dirname" >> $GITHUB_OUTPUT
       - name: Archive the artifacts
         uses: actions/upload-artifact@v4
