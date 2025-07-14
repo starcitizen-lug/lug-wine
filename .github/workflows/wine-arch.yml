@@ -25,7 +25,6 @@ jobs:
           useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown user -R . && cd wine-tkg-git/wine-tkg-git
 
-          [ -f "./wine-tkg-userpatches/"*] && rm "./wine-tkg-userpatches/"*".mypatch"
           patches=("silence-sc-unsupported-os")
           for file in "${patches[@]}"; do
               cp "../../patches/wine/$file.patch" "./wine-tkg-userpatches/${file%.patch}.mypatch"
@@ -39,11 +38,45 @@ jobs:
           sed -i 's/use_fsync="true"/use_fsync="false"/' customization.cfg
 
           sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc"/' ./wine-tkg-profiles/advanced-customization.cfg
-          
+
           su user -c "yes|PKGDEST=/tmp/wine-tkg makepkg --noconfirm -s"
 
-      - name: Archive the artifacts
+      - name: Create Archive
+        id: archive
+        shell: bash {0}
+        run: |
+          cd wine-tkg-git/wine-tkg-git
+          dir="$(find /tmp/wine-tkg -maxdepth 1 -type f -name 'wine-*.tar.zst' -printf '%f\n')"
+          lug_archive="lug-$(echo "$dir" | cut -d. -f1-2).tar.zst"
+          mv "/tmp/wine-tkg/$dir" "/tmp/wine-tkg/$lug_archive"
+
+          echo "BUILD_ARCHIVE=$lug_archive" >> $GITHUB_OUTPUT
+      - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
-          name: wine-tkg-build
+          name: "lug-wine-tkg-build"
           path: /tmp/wine-tkg
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: "lug-wine-tkg-build"
+          path: .
+      - name: Find archive
+        id: find
+        shell: bash {0}
+        run: |
+          file="$(find . -name '*.tar.zst' | head -n1)"
+          version="$(echo $file | cut -d '-' -f6 | cut -d '.' -f 1,2)"
+          echo "ARCHIVE_PATH=$file" >> $GITHUB_OUTPUT
+          echo "NEW_TAG=$version" >> $GITHUB_OUTPUT
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.find.outputs.NEW_TAG }}
+          files: ${{ steps.find.outputs.ARCHIVE_PATH }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
