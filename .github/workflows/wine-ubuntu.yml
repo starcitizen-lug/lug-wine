@@ -8,26 +8,25 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    #container:
-    #  image: "ubuntu:25.04"
+    container:
+      image: "ubuntu:25.04"
     env:
       DEBIAN_FRONTEND: noninteractive
       TZ: UTC
     steps:
-      # - name: Install Git
-      #   run: |
-      #     apt-get update
-      #     apt-get install -y git
+      - name: Install Git
+        run: |
+          apt-get update
+          apt-get install -y git
       - uses: actions/checkout@v4
         with:
           submodules: true
       - name: Compilation
-        id: build
         shell: bash {0}
         run: |
-          sudo dpkg --add-architecture i386 && sudo apt-get update
-          sudo apt-get install -y aptitude
-          sudo aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
+          dpkg --add-architecture i386 && apt-get update
+          apt-get install -y aptitude
+          aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
           cd wine-tkg-git/wine-tkg-git
 
           patches=("silence-sc-unsupported-os")
@@ -38,9 +37,6 @@ jobs:
           sed -i 's/wayland_driver="false"/wayland_driver="true"/' customization.cfg
 
           sed -i 's/use_staging="true"/use_staging="false"/' customization.cfg
-          #sed -i 's/use_ntsync="false"/use_ntsync="true"/' customization.cfg
-          #sed -i 's/use_esync="true"/use_esync="false"/' customization.cfg
-          #sed -i 's/use_fsync="true"/use_fsync="false"/' customization.cfg
 
           sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc"/' ./wine-tkg-profiles/advanced-customization.cfg
 
@@ -48,13 +44,43 @@ jobs:
           echo '_ci_build="true"' >> customization.cfg
           touch tarplz
           yes|./non-makepkg-build.sh
+      - name: Create Archive
+        id: archive
+        shell: bash {0}
+        run: |
+          cd wine-tkg-git/wine-tkg-git
+          dir=$(find ./non-makepkg-builds -maxdepth 1 -type f -name 'wine-*.tar' -printf '%f\n')
+          lug_archive="lug-$(echo "$dir" | cut -d. -f1-2).tar"
+          mv "./non-makepkg-builds/$dir" "./non-makepkg-builds/$lug_archive"
+          gzip "./non-makepkg-builds/$lug_archive"
 
-          dir=$(find ./non-makepkg-builds -maxdepth 1 -type d -name 'wine-*' -printf '%f\n')
-          lug_dirname="lug-$(echo "$dir" | cut -d. -f1-2)"
-          mv "./non-makepkg-builds/$dir" "./non-makepkg-builds/$lug_dirname"
-          echo "BUILD_DIR=$lug_dirname" >> $GITHUB_OUTPUT
-      - name: Archive the artifacts
+          echo "BUILD_ARCHIVE=$lug_archive.gz" >> $GITHUB_OUTPUT
+      - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
-          name:  ${{ steps.build.outputs.BUILD_DIR }}
-          path: wine-tkg-git/non-makepkg-builds
+          name: "lug-wine-tkg-build"
+          path: wine-tkg-git/wine-tkg-git/non-makepkg-builds
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: "lug-wine-tkg-build"
+          path: .
+      - name: Find archive
+        id: find
+        shell: bash {0}
+        run: |
+          file="$(find . -name '*.tar.gz' | head -n1)"
+          version="$(echo $file | cut -d '-' -f6 | cut -d '.' -f 1,2)"
+          echo "ARCHIVE_PATH=$file" >> $GITHUB_OUTPUT
+          echo "NEW_TAG=$version" >> $GITHUB_OUTPUT
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.find.outputs.NEW_TAG }}
+          files: ${{ steps.find.outputs.ARCHIVE_PATH }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
