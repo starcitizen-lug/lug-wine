@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: "ubuntu:25.04"
+      image: "ubuntu:22.04"
     env:
       DEBIAN_FRONTEND: noninteractive
       TZ: UTC
@@ -29,19 +29,22 @@ jobs:
           aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
           cd wine-tkg-git/wine-tkg-git
 
-          patches=("silence-sc-unsupported-os")
+          patches=("silence-sc-unsupported-os", "dummy_dlls", "enables_dxvk-nvapi", "nvngx_dlls", "winefacewarehacks-minimal")
           for file in "${patches[@]}"; do
               cp "../../patches/wine/$file.patch" "./wine-tkg-userpatches/${file%.patch}.mypatch"
           done
 
+          # customization.cfg settings
           sed -i 's/wayland_driver="false"/wayland_driver="true"/' customization.cfg
-
           sed -i 's/use_staging="true"/use_staging="false"/' customization.cfg
-
-          sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc"/' ./wine-tkg-profiles/advanced-customization.cfg
-
-          sed -i 's/_NOLIB32="false"/_NOLIB32="wow64"/' wine-tkg-profiles/advanced-customization.cfg
+          # 22.04 compatability issues with gstreamer
+          sed -i 's/proton_mf_patches="true"/proton_mf_patches="false"/' customization.cfg
           echo '_ci_build="true"' >> customization.cfg
+
+          # advanced-customization.cfg settings
+          sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc"/' ./wine-tkg-profiles/advanced-customization.cfg
+          sed -i 's/_NOLIB32="false"/_NOLIB32="wow64"/' wine-tkg-profiles/advanced-customization.cfg
+
           touch tarplz
           yes|./non-makepkg-build.sh
       - name: Create Archive
