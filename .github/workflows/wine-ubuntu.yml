@@ -25,11 +25,18 @@ jobs:
         shell: bash {0}
         run: |
           dpkg --add-architecture i386 && apt-get update
-          apt-get install -y aptitude
+          apt-get install -y aptitude zstd
           aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
           cd wine-tkg-git/wine-tkg-git
 
-          patches=("silence-sc-unsupported-os", "dummy_dlls", "enables_dxvk-nvapi", "nvngx_dlls", "winefacewarehacks-minimal")
+          patches=("silence-sc-unsupported-os"
+                   "dummy_dlls"
+                   "enables_dxvk-nvapi"
+                   "nvngx_dlls"
+                   "winefacewarehacks-minimal"
+                   "cache-committed-size"
+          )
+
           for file in "${patches[@]}"; do
               cp "../../patches/wine/$file.patch" "./wine-tkg-userpatches/${file%.patch}.mypatch"
           done
@@ -37,7 +44,7 @@ jobs:
           # customization.cfg settings
           sed -i 's/wayland_driver="false"/wayland_driver="true"/' customization.cfg
           sed -i 's/use_staging="true"/use_staging="false"/' customization.cfg
-          # 22.04 compatability issues with gstreamer
+          # 22.04 compat
           sed -i 's/proton_mf_patches="true"/proton_mf_patches="false"/' customization.cfg
           echo '_ci_build="true"' >> customization.cfg
 
@@ -45,19 +52,18 @@ jobs:
           sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc"/' ./wine-tkg-profiles/advanced-customization.cfg
           sed -i 's/_NOLIB32="false"/_NOLIB32="wow64"/' wine-tkg-profiles/advanced-customization.cfg
 
-          touch tarplz
           yes|./non-makepkg-build.sh
       - name: Create Archive
         id: archive
         shell: bash {0}
         run: |
           cd wine-tkg-git/wine-tkg-git
-          dir=$(find ./non-makepkg-builds -maxdepth 1 -type f -name 'wine-*.tar' -printf '%f\n')
-          lug_archive="lug-$(echo "$dir" | cut -d. -f1-2).tar"
-          mv "./non-makepkg-builds/$dir" "./non-makepkg-builds/$lug_archive"
-          gzip "./non-makepkg-builds/$lug_archive"
+          dir=$(find ./non-makepkg-builds -maxdepth 1 -type d -name 'wine-*' -printf '%f\n')
+          lug_archive="lug-$(echo "$dir" | cut -d. -f1-2).tar.zst"
 
-          echo "BUILD_ARCHIVE=$lug_archive.gz" >> $GITHUB_OUTPUT
+          tar -I zstd -cf ./non-makepkg-builds/$lug_archive ./non-makepkg-builds/$dir
+
+          echo "BUILD_ARCHIVE=$lug_archive" >> $GITHUB_OUTPUT
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
@@ -76,8 +82,8 @@ jobs:
         id: find
         shell: bash {0}
         run: |
-          file="$(find . -name '*.tar.gz' | head -n1)"
-          version="$(echo $file | cut -d '-' -f6 | cut -d '.' -f 1,2)"
+          file="$(find . -name '*.tar.zst' | head -n1)"
+          version="$(echo $file | grep -oE '[0-9]+\.[0-9]+')"
           echo "ARCHIVE_PATH=$file" >> $GITHUB_OUTPUT
           echo "NEW_TAG=$version" >> $GITHUB_OUTPUT
       - name: Create GitHub Release

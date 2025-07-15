@@ -1,29 +1,33 @@
-name: Wine Arch Linux CI
+name: Wine Ubuntu Staging CI
 
 on:
   #schedule:
-  #  - cron:  '45 8,20 * * *'
+  #  - cron:  '25 9,21 * * *'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: archlinux:latest
-
+    container:
+      image: "ubuntu:22.04"
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      TZ: UTC
     steps:
       - name: Install Git
-        run: pacman -Sy --noconfirm git
+        run: |
+          apt-get update
+          apt-get install -y git
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Compile
-        env:
-          XDG_CACHE_HOME: /tmp/.cache
+      - name: Compilation
+        shell: bash {0}
         run: |
-          echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
-          pacman -Syu --noconfirm base-devel sudo git
-          useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-          chown user -R . && cd wine-tkg-git/wine-tkg-git
+          dpkg --add-architecture i386 && apt-get update
+          apt-get install -y aptitude zstd
+          aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
+          cd wine-tkg-git/wine-tkg-git
 
           patches=("silence-sc-unsupported-os"
                    "dummy_dlls"
@@ -39,31 +43,32 @@ jobs:
 
           # customization.cfg settings
           sed -i 's/wayland_driver="false"/wayland_driver="true"/' customization.cfg
-          sed -i 's/use_staging="true"/use_staging="false"/' customization.cfg
-          sed -i 's/use_ntsync="false"/use_ntsync="true"/' customization.cfg
-          sed -i 's/use_esync="true"/use_esync="false"/' customization.cfg
-          sed -i 's/use_fsync="true"/use_fsync="false"/' customization.cfg
+          sed -i 's/use_staging="false"/use_staging="true"/' customization.cfg
+          # 22.04 compat
+          sed -i 's/proton_mf_patches="true"/proton_mf_patches="false"/' customization.cfg
+          echo '_ci_build="true"' >> customization.cfg
 
           # advanced-customization.cfg settings
           sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc"/' ./wine-tkg-profiles/advanced-customization.cfg
+          sed -i 's/_NOLIB32="false"/_NOLIB32="wow64"/' wine-tkg-profiles/advanced-customization.cfg
 
-          su user -c "yes|PKGDEST=/tmp/wine-tkg makepkg --noconfirm -s"
-
+          yes|./non-makepkg-build.sh
       - name: Create Archive
         id: archive
         shell: bash {0}
         run: |
           cd wine-tkg-git/wine-tkg-git
-          dir="$(find /tmp/wine-tkg -maxdepth 1 -type f -name 'wine-*.tar.zst' -printf '%f\n')"
+          dir=$(find ./non-makepkg-builds -maxdepth 1 -type d -name 'wine-*' -printf '%f\n')
           lug_archive="lug-$(echo "$dir" | cut -d. -f1-2).tar.zst"
-          mv "/tmp/wine-tkg/$dir" "/tmp/wine-tkg/$lug_archive"
+
+          tar -I zstd -cf ./non-makepkg-builds/$lug_archive ./non-makepkg-builds/$dir
 
           echo "BUILD_ARCHIVE=$lug_archive" >> $GITHUB_OUTPUT
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
           name: "lug-wine-tkg-build"
-          path: /tmp/wine-tkg
+          path: wine-tkg-git/wine-tkg-git/non-makepkg-builds
   release:
     needs: build
     runs-on: ubuntu-latest
