@@ -61,7 +61,7 @@ jobs:
           dir=$(find ./non-makepkg-builds -maxdepth 1 -type d -name 'wine-*' -printf '%f\n')
           lug_archive="lug-$(echo "$dir" | cut -d. -f1-2).tar.zst"
 
-          tar -I zstd -cf ./non-makepkg-builds/$lug_archive ./non-makepkg-builds/$dir
+          tar --remove-files -I zstd -C "./non-makepkg-builds/$dir" -cf "./non-makepkg-builds/$lug_archive" .
 
           echo "BUILD_ARCHIVE=$lug_archive" >> $GITHUB_OUTPUT
       - name: Upload Archive
