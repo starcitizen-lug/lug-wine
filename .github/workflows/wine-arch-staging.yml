@@ -54,16 +54,21 @@ jobs:
         shell: bash {0}
         run: |
           cd wine-tkg-git/wine-tkg-git
-          dir="$(find /tmp/wine-tkg -maxdepth 1 -type f -name 'wine-*.tar.zst' -printf '%f\n')"
-          lug_archive="lug-$(echo "$dir" | cut -d. -f1-2).tar.zst"
-          mv "/tmp/wine-tkg/$dir" "/tmp/wine-tkg/$lug_archive"
+          archive="$(find /tmp/wine-tkg -maxdepth 1 -type f -name 'wine-*.tar.zst' -printf '%f\n')"
+          lug_dir="lug-$(echo "$archive" | cut -d. -f1-2)"
+          lug_wine_tkg="$(find ./pkg -maxdepth 1 -type d -name 'wine-*' -printf '%f\n')"
+
+          mkdir -p /tmp/lug-wine-tkg
+          mv "./pkg/$lug_wine_tkg/usr" "/tmp/lug-wine-tkg/$lug_dir"
+
+          tar --remove-files -I zstd -C "/tmp/lug-wine-tkg/$lug_dir" -cf "/tmp/lug-wine-tkg/$lug_dir.tar.zst" .
 
           echo "BUILD_ARCHIVE=$lug_archive" >> $GITHUB_OUTPUT
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
           name: "lug-wine-tkg-build"
-          path: /tmp/wine-tkg
+          path: /tmp/lug-wine-tkg
   release:
     needs: build
     runs-on: ubuntu-latest
