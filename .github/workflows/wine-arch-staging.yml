@@ -46,6 +46,7 @@ jobs:
 
           # advanced-customization.cfg settings
           sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc"/' ./wine-tkg-profiles/advanced-customization.cfg
+          sed -i 's/NOLIB32="false"/NOLIB32="wow64"/' ./wine-tkg-profiles/advanced-customization.cfg
 
           su user -c "yes|PKGDEST=/tmp/wine-tkg makepkg --noconfirm -s"
 
