@@ -23,12 +23,12 @@ package_artifact() {
   fi
   lug_name="lug-$(echo "$built_dir" | cut -d. -f1-2)"
   workdir="./non-makepkg-builds/$built_dir"
-  archive_path="/tmp/lug-wine-tkg/${lug_name}.tar.zst"
+  archive_path="/tmp/lug-wine-tkg/${lug_name}.tar.gz"
   mkdir -p "$(dirname "$archive_path")"
-  tar --remove-files -I zstd -C "$workdir" -cf "$archive_path" .
+  tar --remove-files -C "./non-makepkg-builds" -czf "$archive_path" "$workdir"
   mkdir -p "$SCRIPT_DIR/output"
   mv "$archive_path" "$SCRIPT_DIR/output/"
-  echo "Build artifact collected in $SCRIPT_DIR/output/${lug_name}.tar.zst"
+  echo "Build artifact collected in $SCRIPT_DIR/output/${lug_name}.tar.gz"
 }
 
 # Parse preset argument
