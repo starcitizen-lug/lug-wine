@@ -29,12 +29,12 @@ jobs:
           aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
           cd wine-tkg-git/wine-tkg-git
 
-          patches=("silence-sc-unsupported-os"
-                   "dummy_dlls"
+          patches=("dummy_dlls"
                    "enables_dxvk-nvapi"
                    "nvngx_dlls"
                    "winefacewarehacks-minimal"
                    "cache-committed-size"
+                   "hidewineexports"
           )
 
           for file in "${patches[@]}"; do
@@ -44,13 +44,16 @@ jobs:
           # customization.cfg settings
           sed -i 's/wayland_driver="false"/wayland_driver="true"/' customization.cfg
           sed -i 's/use_staging="true"/use_staging="false"/' customization.cfg
-          # 22.04 compat
-          sed -i 's/proton_mf_patches="true"/proton_mf_patches="false"/' customization.cfg
+          sed -i 's/proton_battleye_support="true"/proton_battleye_support="false"/' customization.cfg
+          sed -i 's/proton_eac_support="true"/proton_eac_support="false"/' customization.cfg
           echo '_ci_build="true"' >> customization.cfg
 
+          # 22.04 compat
+          sed -i 's/proton_mf_patches="true"/proton_mf_patches="false"/' customization.cfg
+
           # advanced-customization.cfg settings
-          sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc"/' ./wine-tkg-profiles/advanced-customization.cfg
-          sed -i 's/_NOLIB32="false"/_NOLIB32="wow64"/' wine-tkg-profiles/advanced-customization.cfg
+          sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc -W ntdll-Hide_Wine_Exports"/' ./wine-tkg-profiles/advanced-customization.cfg
+          sed -i 's/NOLIB32="false"/NOLIB32="wow64"/' ./wine-tkg-profiles/advanced-customization.cfg
 
           yes|./non-makepkg-build.sh
       - name: Create Archive
