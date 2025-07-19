@@ -1,0 +1,5 @@
+# Lug-Wine gitignore
+# This file is used to ignore files and directories.
+
+#Temporary build directories
+wine-tkg-build-tmp*/
