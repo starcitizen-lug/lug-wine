@@ -25,7 +25,7 @@ package_artifact() {
   workdir="./non-makepkg-builds/$built_dir"
   archive_path="/tmp/lug-wine-tkg/${lug_name}.tar.gz"
   mkdir -p "$(dirname "$archive_path")"
-  tar --remove-files -C "./non-makepkg-builds" -czf "$archive_path" "$workdir"
+  tar --remove-files -czf "$archive_path" -C "./non-makepkg-builds" "$built_dir"
   mkdir -p "$SCRIPT_DIR/output"
   mv "$archive_path" "$SCRIPT_DIR/output/"
   echo "Build artifact collected in $SCRIPT_DIR/output/${lug_name}.tar.gz"
@@ -59,12 +59,13 @@ echo "Created temporary build directory: $TMP_BUILD_DIR"
 
 cd "$TMP_BUILD_DIR"
 
-patches=("silence-sc-unsupported-os"
+patches=("10.2+_eac_fix"
          "dummy_dlls"
          "enables_dxvk-nvapi"
          "nvngx_dlls"
          "winefacewarehacks-minimal"
          "cache-committed-size"
+         "0079-HACK-winewayland-add-support-for-picking-primary-mon"
          "hidewineexports"
 )
 
