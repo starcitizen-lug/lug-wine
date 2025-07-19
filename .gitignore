@@ -3,3 +3,6 @@
 
 #Temporary build directories
 wine-tkg-build-tmp*/
+
+#Build output directories
+output/
