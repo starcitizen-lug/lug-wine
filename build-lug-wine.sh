@@ -65,6 +65,7 @@ patches=("silence-sc-unsupported-os"
          "nvngx_dlls"
          "winefacewarehacks-minimal"
          "cache-committed-size"
+         "hidewineexports"
 )
 
 mkdir -p ./wine-tkg-userpatches
