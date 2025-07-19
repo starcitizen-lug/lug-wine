@@ -14,39 +14,15 @@ cleanup() {
 trap cleanup EXIT
 
 package_artifact() {
-  local type="$1"
   local workdir lug_name archive_path
-  if [[ "$type" == "makepkg" ]]; then
-    local archive_name
-    archive_name="$(find "$PKGDEST" -maxdepth 1 -type f -name 'wine-*.tar.zst' -printf '%f\n' | head -n1)"
-    if [[ -z "$archive_name" ]]; then
-      echo "No archive found in $PKGDEST"
-      exit 1
-    fi
-    lug_name="lug-$(echo "$archive_name" | cut -d. -f1-2)"
-    local pkgdir
-    pkgdir="$(find ./pkg -maxdepth 1 -type d -name 'wine-*' -printf '%f\n' | head -n1)"
-    if [[ -z "$pkgdir" || ! -d "./pkg/$pkgdir/usr" ]]; then
-      echo "No built package directory found in ./pkg"
-      exit 1
-    fi
-    workdir="/tmp/lug-wine-tkg/$lug_name"
-    mkdir -p "$(dirname "$workdir")"
-    mv "./pkg/$pkgdir/usr" "$workdir"
-  elif [[ "$type" == "nonmakepkg" ]]; then
-    local built_dir
-    built_dir="$(find ./non-makepkg-builds -maxdepth 1 -type d -name 'wine-*' -printf '%f\n' | head -n1)"
-    if [[ -z "$built_dir" ]]; then
-      echo "No build directory found in non-makepkg-builds/"
-      exit 1
-    fi
-    lug_name="lug-$(echo "$built_dir" | cut -d. -f1-2)"
-    workdir="./non-makepkg-builds/$built_dir"
-  else
-    echo "Unknown packaging type: $type"
+  local built_dir
+  built_dir="$(find ./non-makepkg-builds -maxdepth 1 -type d -name 'wine-*' -printf '%f\n' | head -n1)"
+  if [[ -z "$built_dir" ]]; then
+    echo "No build directory found in non-makepkg-builds/"
     exit 1
   fi
-
+  lug_name="lug-$(echo "$built_dir" | cut -d. -f1-2)"
+  workdir="./non-makepkg-builds/$built_dir"
   archive_path="/tmp/lug-wine-tkg/${lug_name}.tar.zst"
   mkdir -p "$(dirname "$archive_path")"
   tar --remove-files -I zstd -C "$workdir" -cf "$archive_path" .
@@ -98,19 +74,7 @@ done
 
 echo "Copied LUG patches to ./wine-tkg-userpatches/"
 
-if command -v makepkg >/dev/null 2>&1; then
-  echo "makepkg found, using it to build..."
-  export PKGDEST="${PKGDEST:-/tmp/wine-tkg}"
-  rm -rf "$PKGDEST" /tmp/lug-wine-tkg
-  mkdir -p "$PKGDEST" /tmp/lug-wine-tkg
-  makepkg --config "$SCRIPT_DIR/$CONFIG" "$@"
-  echo "Build completed successfully."
-  echo "Packaging makepkg build artifact..."
-  package_artifact makepkg
-else
-  echo "makepkg not found, falling back to non-makepkg-build.sh..."
-  ./non-makepkg-build.sh --config "$SCRIPT_DIR/$CONFIG" "$@"
-  echo "Build completed successfully."
-  echo "Packaging non-makepkg build artifact..."
-  package_artifact nonmakepkg
-fi
+./non-makepkg-build.sh --config "$SCRIPT_DIR/$CONFIG" "$@"
+echo "Build completed successfully."
+echo "Packaging build artifact..."
+package_artifact
