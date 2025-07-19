@@ -25,12 +25,12 @@ jobs:
           useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown user -R . && cd wine-tkg-git/wine-tkg-git
 
-          patches=("silence-sc-unsupported-os"
-                   "dummy_dlls"
+          patches=("dummy_dlls"
                    "enables_dxvk-nvapi"
                    "nvngx_dlls"
                    "winefacewarehacks-minimal"
                    "cache-committed-size"
+                   "hidewineexports"
           )
 
           for file in "${patches[@]}"; do
@@ -44,8 +44,11 @@ jobs:
           sed -i 's/use_esync="true"/use_esync="false"/' customization.cfg
           sed -i 's/use_fsync="true"/use_fsync="false"/' customization.cfg
 
+          sed -i 's/proton_battleye_support="true"/proton_battleye_support="false"/' customization.cfg
+          sed -i 's/proton_eac_support="true"/proton_eac_support="false"/' customization.cfg
+
           # advanced-customization.cfg settings
-          sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc"/' ./wine-tkg-profiles/advanced-customization.cfg
+          sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc -W ntdll-Hide_Wine_Exports"/' ./wine-tkg-profiles/advanced-customization.cfg
           sed -i 's/NOLIB32="false"/NOLIB32="wow64"/' ./wine-tkg-profiles/advanced-customization.cfg
 
           su user -c "yes|PKGDEST=/tmp/wine-tkg makepkg --noconfirm -s"
