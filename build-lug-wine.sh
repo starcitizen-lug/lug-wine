@@ -8,7 +8,7 @@ PATCHES_DIR="$SCRIPT_DIR/patches/wine"
 TMP_BUILD_DIR="$SCRIPT_DIR/wine-tkg-build-tmp-$(mktemp -u XXXXXX)"
 
 cleanup() {
-  #rm -rf "$TMP_BUILD_DIR"
+  rm -rf "$TMP_BUILD_DIR"
   echo "Cleaned up temporary build directory."
 }
 trap cleanup EXIT
