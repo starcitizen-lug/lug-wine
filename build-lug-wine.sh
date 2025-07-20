@@ -22,10 +22,10 @@ package_artifact() {
     exit 1
   fi
   lug_name="lug-$(echo "$built_dir" | cut -d. -f1-2)"
-  workdir="./non-makepkg-builds/$built_dir"
   archive_path="/tmp/lug-wine-tkg/${lug_name}.tar.gz"
   mkdir -p "$(dirname "$archive_path")"
-  tar --remove-files -czf "$archive_path" -C "./non-makepkg-builds" "$built_dir"
+  mv "./non-makepkg-builds/$built_dir" "./non-makepkg-builds/$lug_name"
+  tar --remove-files -czf "$archive_path" -C "./non-makepkg-builds" "$lug_name"
   mkdir -p "$SCRIPT_DIR/output"
   mv "$archive_path" "$SCRIPT_DIR/output/"
   echo "Build artifact collected in $SCRIPT_DIR/output/${lug_name}.tar.gz"
