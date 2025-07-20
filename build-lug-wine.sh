@@ -76,6 +76,10 @@ done
 
 echo "Copied LUG patches to ./wine-tkg-userpatches/"
 
+# advanced-customization.cfg settings
+sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc -W ntdll-Hide_Wine_Exports"/' $TMP_BUILD_DIR/wine-tkg-profiles/advanced-customization.cfg
+sed -i 's/NOLIB32="false"/NOLIB32="wow64"/' $TMP_BUILD_DIR/wine-tkg-profiles/advanced-customization.cfg
+
 ./non-makepkg-build.sh --config "$SCRIPT_DIR/$CONFIG" "$@"
 echo "Build completed successfully."
 echo "Packaging build artifact..."
