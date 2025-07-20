@@ -66,6 +66,7 @@ patches=("10.2+_eac_fix"
          "winefacewarehacks-minimal"
          "cache-committed-size"
          "0079-HACK-winewayland-add-support-for-picking-primary-mon"
+         "reg_hide_wine"
          "hidewineexports"
 )
 
