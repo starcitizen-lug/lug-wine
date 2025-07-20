@@ -23,56 +23,14 @@ jobs:
           echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
           pacman -Syu --noconfirm base-devel sudo git
           useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-          chown user -R . && cd wine-tkg-git/wine-tkg-git
+          chown user -R .
 
-          patches=("dummy_dlls"
-                   "enables_dxvk-nvapi"
-                   "nvngx_dlls"
-                   "winefacewarehacks-minimal"
-                   "cache-committed-size"
-                   "hidewineexports"
-          )
-
-          for file in "${patches[@]}"; do
-              cp "../../patches/wine/$file.patch" "./wine-tkg-userpatches/${file%.patch}.mypatch"
-          done
-
-          # customization.cfg settings
-          sed -i 's/wayland_driver="false"/wayland_driver="true"/' customization.cfg
-          sed -i 's/use_staging="false"/use_staging="true"/' customization.cfg
-          sed -i 's/use_ntsync="false"/use_ntsync="true"/' customization.cfg
-          sed -i 's/use_esync="true"/use_esync="false"/' customization.cfg
-          sed -i 's/use_fsync="true"/use_fsync="false"/' customization.cfg
-
-          sed -i 's/proton_battleye_support="true"/proton_battleye_support="false"/' customization.cfg
-          sed -i 's/proton_eac_support="true"/proton_eac_support="false"/' customization.cfg
-
-          # advanced-customization.cfg settings
-          sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc -W ntdll-Hide_Wine_Exports"/' ./wine-tkg-profiles/advanced-customization.cfg
-          sed -i 's/NOLIB32="false"/NOLIB32="wow64"/' ./wine-tkg-profiles/advanced-customization.cfg
-
-          su user -c "yes|PKGDEST=/tmp/wine-tkg makepkg --noconfirm -s"
-
-      - name: Create Archive
-        id: archive
-        shell: bash {0}
-        run: |
-          cd wine-tkg-git/wine-tkg-git
-          archive="$(find /tmp/wine-tkg -maxdepth 1 -type f -name 'wine-*.tar.zst' -printf '%f\n')"
-          lug_dir="lug-$(echo "$archive" | cut -d. -f1-2)"
-          lug_wine_tkg="$(find ./pkg -maxdepth 1 -type d -name 'wine-*' -printf '%f\n')"
-
-          mkdir -p /tmp/lug-wine-tkg
-          mv "./pkg/$lug_wine_tkg/usr" "/tmp/lug-wine-tkg/$lug_dir"
-
-          tar --remove-files -I zstd -C "/tmp/lug-wine-tkg/$lug_dir" -cf "/tmp/lug-wine-tkg/$lug_dir.tar.zst" .
-
-          echo "BUILD_ARCHIVE=$lug_archive" >> $GITHUB_OUTPUT
+          ./build-lug-wine.sh staging-ntsync
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
           name: "lug-wine-tkg-build"
-          path: /tmp/lug-wine-tkg
+          path: ./output
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -86,7 +44,7 @@ jobs:
         id: find
         shell: bash {0}
         run: |
-          file="$(find . -name '*.tar.zst' | head -n1)"
+          file="$(find . -name '*.tar.gz' | head -n1)"
           version="$(echo $file | grep -oE '[0-9]+\.[0-9]+')"
           echo "ARCHIVE_PATH=$file" >> $GITHUB_OUTPUT
           echo "NEW_TAG=$version" >> $GITHUB_OUTPUT
