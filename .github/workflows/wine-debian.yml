@@ -1,4 +1,4 @@
-name: Wine Ubuntu CI
+name: Wine Debian CI
 
 on:
   #schedule:
@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: "ubuntu:22.04"
+      image: "debian:11"
     env:
       DEBIAN_FRONTEND: noninteractive
       TZ: UTC
@@ -26,7 +26,7 @@ jobs:
         run: |
           dpkg --add-architecture i386 && apt-get update
           apt-get install -y aptitude
-          aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
+          #aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
 
           ./build-lug-wine.sh fsync
       - name: Upload Archive

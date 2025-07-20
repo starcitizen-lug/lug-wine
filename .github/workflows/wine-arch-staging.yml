@@ -21,7 +21,7 @@ jobs:
           XDG_CACHE_HOME: /tmp/.cache
         run: |
           echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
-          pacman -Syu --noconfirm base-devel sudo git
+          pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
           useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown user -R .
 
