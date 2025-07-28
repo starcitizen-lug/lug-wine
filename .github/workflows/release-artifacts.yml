@@ -1,0 +1,50 @@
+name: Release Artifacts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: starcitizen-lug/lug-wine/.github/workflows/build-artifacts.yml@main
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download Debian Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: "debian-build"
+          path: ./debian
+      - name: Download Debian Staging Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: "debian-staging-build"
+          path: ./debian-staging
+      - name: Download Arch Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: "arch-build"
+          path: ./arch
+      - name: Download Arch Staging Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: "arch-staging-build"
+          path: ./arch-staging
+      - name: Find tag
+        id: find
+        shell: bash {0}
+        run: |
+          file="$(find . -name '*.tar.gz' | head -n1)"
+          version="$(echo $file | grep -oE '[0-9]+\.[0-9]+')"
+          echo "NEW_TAG=$version" >> $GITHUB_OUTPUT
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.find.outputs.NEW_TAG }}
+          files: |
+            ./debian/*.tar.gz
+            ./debian-staging/*.tar.gz
+            ./arch/*.tar.gz
+            ./arch-staging/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,116 @@
+name: Build Artifacts
+
+on:
+  schedule:
+    - cron: "0 10 * * 5" # friday at 10:00 UTC
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build-debian:
+    runs-on: ubuntu-latest
+    container:
+      image: "debian:11"
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      TZ: UTC
+    steps:
+      - name: Install Git
+        run: |
+          apt-get update
+          apt-get install -y git
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Compilation
+        shell: bash {0}
+        run: |
+          dpkg --add-architecture i386 && apt-get update
+          apt-get install -y aptitude
+          #aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
+
+          ./build-lug-wine.sh fsync
+      - name: Upload Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: "debian-build"
+          path: ./output
+
+  build-debian-staging:
+    runs-on: ubuntu-latest
+    container:
+      image: "debian:11"
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      TZ: UTC
+    steps:
+      - name: Install Git
+        run: |
+          apt-get update
+          apt-get install -y git
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Compilation
+        shell: bash {0}
+        run: |
+          dpkg --add-architecture i386 && apt-get update
+          apt-get install -y aptitude
+          #aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
+
+          ./build-lug-wine.sh staging-fsync
+      - name: Upload Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: "debian-staging-build"
+          path: ./output
+
+  build-arch:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install Git
+        run: pacman -Sy --noconfirm git
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Compile
+        env:
+          XDG_CACHE_HOME: /tmp/.cache
+        run: |
+          echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
+          pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
+          useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          chown user -R .
+
+          ./build-lug-wine.sh ntsync
+      - name: Upload Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: "arch-build"
+          path: ./output
+
+  build-arch-staging:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install Git
+        run: pacman -Sy --noconfirm git
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Compile
+        env:
+          XDG_CACHE_HOME: /tmp/.cache
+        run: |
+          echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
+          pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
+          useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          chown user -R .
+
+          ./build-lug-wine.sh staging-ntsync
+      - name: Upload Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: "arch-staging-build"
+          path: ./output
