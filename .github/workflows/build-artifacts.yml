@@ -25,9 +25,7 @@ jobs:
       - name: Compilation
         shell: bash {0}
         run: |
-          dpkg --add-architecture i386 && apt-get update
           apt-get install -y aptitude
-          #aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
 
           ./build-lug-wine.sh fsync
       - name: Upload Archive
@@ -54,9 +52,7 @@ jobs:
       - name: Compilation
         shell: bash {0}
         run: |
-          dpkg --add-architecture i386 && apt-get update
           apt-get install -y aptitude
-          #aptitude remove -y '?narrow(?installed,?version(deb.sury.org))'
 
           ./build-lug-wine.sh staging-fsync
       - name: Upload Archive
@@ -78,7 +74,6 @@ jobs:
         env:
           XDG_CACHE_HOME: /tmp/.cache
         run: |
-          echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
           pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
           useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown user -R .
@@ -103,7 +98,6 @@ jobs:
         env:
           XDG_CACHE_HOME: /tmp/.cache
         run: |
-          echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
           pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
           useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown user -R .
