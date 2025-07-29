@@ -20,59 +20,56 @@ env:
   WINE_VERSION: ${{ inputs.wine_version || github.event.inputs.wine_version }}
   LUG_REV: ${{ inputs.lug_rev || github.event.inputs.lug_rev }}
 jobs:
-  build-debian:
+  build:
     runs-on: ubuntu-latest
-    container:
-      image: "debian:11"
-    env:
-      DEBIAN_FRONTEND: noninteractive
-      TZ: UTC
     strategy:
       matrix:
-        preset: [fsync, staging-fsync]
+        include:
+          - os: debian
+            image: debian:11
+            preset: fsync
+          - os: debian
+            image: debian:11
+            preset: staging-fsync
+          - os: arch
+            image: archlinux:latest
+            preset: ntsync
+          - os: arch
+            image: archlinux:latest
+            preset: staging-ntsync
+    container:
+      image: ${{ matrix.image }}
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      XDG_CACHE_HOME: /tmp/.cache
+      TZ: UTC
     steps:
       - name: Install Git
+        shell: bash {0}
         run: |
-          apt-get update
-          apt-get install -y git
+          if [[ "${{ matrix.os }}" == "debian" ]]; then
+            apt-get update
+            apt-get install -y git
+          elif [[ "${{ matrix.os }}" == "arch" ]]; then
+            pacman -Sy --noconfirm git
+          fi
       - uses: actions/checkout@v4
         with:
           submodules: true
       - name: Compilation
         shell: bash {0}
         run: |
-          apt-get install -y aptitude
+          if [[ "${{ matrix.os }}" == "debian" ]]; then
+            apt-get install -y aptitude
+          elif [[ "${{ matrix.os }}" == "arch" ]]; then
+            pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
+            useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+            chown user -R .
+          fi
           echo "$WINE_VERSION" "$LUG_REV"
           ./build-lug-wine.sh "${{ matrix.preset }}" "$WINE_VERSION" "$LUG_REV"
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
-          name: "debian-build"
-          path: ./output
-
-  build-arch:
-    runs-on: ubuntu-latest
-    container: archlinux:latest
-    strategy:
-      matrix:
-        preset: [ntsync, staging-ntsync]
-    steps:
-      - name: Install Git
-        run: pacman -Sy --noconfirm git
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - name: Compile
-        env:
-          XDG_CACHE_HOME: /tmp/.cache
-        run: |
-          pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
-          useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-          chown user -R .
-          echo "$WINE_VERSION" "$LUG_REV"
-          ./build-lug-wine.sh "${{ matrix.preset }}" "$WINE_VERSION" "$LUG_REV"
-      - name: Upload Archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: "arch-build"
+          name: "${{ matrix.os }}-${{ matrix.preset }}-build"
           path: ./output
