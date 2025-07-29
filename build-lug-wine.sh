@@ -21,7 +21,7 @@ package_artifact() {
     echo "No build directory found in non-makepkg-builds/"
     exit 1
   fi
-  lug_name="lug-$(echo "$built_dir" | cut -d. -f1-2)"
+  lug_name="lug-$(echo "$built_dir" | cut -d. -f1-2)${LUG_REV}"
   archive_path="/tmp/lug-wine-tkg/${lug_name}.tar.gz"
   mkdir -p "$(dirname "$archive_path")"
   mv "./non-makepkg-builds/$built_dir" "./non-makepkg-builds/$lug_name"
@@ -54,8 +54,16 @@ case "$PRESET" in
     ;;
 esac
 
+export WINE_VERSION="$1"
+shift || true
+
+export LUG_REV="-${1:-1}"
+shift || true
+
 cp -a "$WINE_TKG_SRC/wine-tkg-git" "$TMP_BUILD_DIR/"
 echo "Created temporary build directory: $TMP_BUILD_DIR"
+
+cp "$CONFIG" "$TMP_BUILD_DIR"
 
 cd "$TMP_BUILD_DIR"
 
@@ -81,7 +89,21 @@ echo "Copied LUG patches to ./wine-tkg-userpatches/"
 sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc -W ntdll-Hide_Wine_Exports"/' $TMP_BUILD_DIR/wine-tkg-profiles/advanced-customization.cfg
 sed -i 's/NOLIB32="false"/NOLIB32="wow64"/' $TMP_BUILD_DIR/wine-tkg-profiles/advanced-customization.cfg
 
-yes|./non-makepkg-build.sh --config "$SCRIPT_DIR/$CONFIG" "$@"
+# customization.cfg settings
+case "$PRESET" in
+  staging*)
+    if [ -n "$WINE_VERSION" ]; then
+      sed -i "s/staging_version=\"\"/staging_version=\"v$WINE_VERSION\"/" "$TMP_BUILD_DIR/$CONFIG"
+    fi
+  ;;
+  *)
+    if [ -n "$WINE_VERSION" ]; then
+      sed -i "s/plain_version=\"\"/plain_version=\"wine-$WINE_VERSION\"/" "$TMP_BUILD_DIR/$CONFIG"
+    fi
+  ;;
+esac
+
+yes|./non-makepkg-build.sh --config "$TMP_BUILD_DIR/$CONFIG" "$@"
 echo "Build completed successfully."
 echo "Packaging build artifact..."
 package_artifact

@@ -5,7 +5,20 @@ on:
     - cron: "0 10 * * 5" # friday at 10:00 UTC
   workflow_dispatch:
   workflow_call:
-
+    inputs:
+      wine_version:
+        description: "Select the wine version to pin the build to"
+        required: true
+        default: ''
+        type: string
+      lug_rev:
+        description: "Select the lug revision"
+        required: true
+        default: '1'
+        type: string
+env:
+  WINE_VERSION: ${{ inputs.wine_version || github.event.inputs.wine_version }}
+  LUG_REV: ${{ inputs.lug_rev || github.event.inputs.lug_rev }}
 jobs:
   build-debian:
     runs-on: ubuntu-latest
@@ -26,8 +39,8 @@ jobs:
         shell: bash {0}
         run: |
           apt-get install -y aptitude
-
-          ./build-lug-wine.sh fsync
+          echo "$WINE_VERSION" "$LUG_REV"
+          ./build-lug-wine.sh fsync "$WINE_VERSION" "$LUG_REV"
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
@@ -53,8 +66,8 @@ jobs:
         shell: bash {0}
         run: |
           apt-get install -y aptitude
-
-          ./build-lug-wine.sh staging-fsync
+          echo "$WINE_VERSION" "$LUG_REV"
+          ./build-lug-wine.sh staging-fsync "$WINE_VERSION" "$LUG_REV"
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
@@ -77,8 +90,8 @@ jobs:
           pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
           useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown user -R .
-
-          ./build-lug-wine.sh ntsync
+          echo "$WINE_VERSION" "$LUG_REV"
+          ./build-lug-wine.sh ntsync "$WINE_VERSION" "$LUG_REV"
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
@@ -101,8 +114,8 @@ jobs:
           pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
           useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown user -R .
-
-          ./build-lug-wine.sh staging-ntsync
+          echo "$WINE_VERSION" "$LUG_REV"
+          ./build-lug-wine.sh staging-ntsync "$WINE_VERSION" "$LUG_REV"
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
