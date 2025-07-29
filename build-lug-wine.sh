@@ -74,6 +74,7 @@ patches=("10.2+_eac_fix"
          "winefacewarehacks-minimal"
          "cache-committed-size"
          "0079-HACK-winewayland-add-support-for-picking-primary-mon"
+         "0088-fixup-HACK-winewayland-add-support-for-picking-prima"
          "silence-sc-unsupported-os"
          "reg_show_wine"
 )
