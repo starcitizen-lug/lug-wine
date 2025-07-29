@@ -16,22 +16,22 @@ jobs:
       - name: Download Debian Artifact
         uses: actions/download-artifact@v4
         with:
-          name: "debian-build"
+          name: "debian-fsync-build"
           path: ./debian
       - name: Download Debian Staging Artifact
         uses: actions/download-artifact@v4
         with:
-          name: "debian-staging-build"
+          name: "debian-staging-fsync-build"
           path: ./debian-staging
       - name: Download Arch Artifact
         uses: actions/download-artifact@v4
         with:
-          name: "arch-build"
+          name: "arch-ntsync-build"
           path: ./arch
       - name: Download Arch Staging Artifact
         uses: actions/download-artifact@v4
         with:
-          name: "arch-staging-build"
+          name: "arch-staging-ntsync-build"
           path: ./arch-staging
       - name: Find tag
         id: find
