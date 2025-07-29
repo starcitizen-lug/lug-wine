@@ -27,6 +27,9 @@ jobs:
     env:
       DEBIAN_FRONTEND: noninteractive
       TZ: UTC
+    strategy:
+      matrix:
+        preset: [fsync, staging-fsync]
     steps:
       - name: Install Git
         run: |
@@ -40,43 +43,19 @@ jobs:
         run: |
           apt-get install -y aptitude
           echo "$WINE_VERSION" "$LUG_REV"
-          ./build-lug-wine.sh fsync "$WINE_VERSION" "$LUG_REV"
+          ./build-lug-wine.sh "${{ matrix.preset }}" "$WINE_VERSION" "$LUG_REV"
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
           name: "debian-build"
           path: ./output
 
-  build-debian-staging:
-    runs-on: ubuntu-latest
-    container:
-      image: "debian:11"
-    env:
-      DEBIAN_FRONTEND: noninteractive
-      TZ: UTC
-    steps:
-      - name: Install Git
-        run: |
-          apt-get update
-          apt-get install -y git
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - name: Compilation
-        shell: bash {0}
-        run: |
-          apt-get install -y aptitude
-          echo "$WINE_VERSION" "$LUG_REV"
-          ./build-lug-wine.sh staging-fsync "$WINE_VERSION" "$LUG_REV"
-      - name: Upload Archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: "debian-staging-build"
-          path: ./output
-
   build-arch:
     runs-on: ubuntu-latest
     container: archlinux:latest
+    strategy:
+      matrix:
+        preset: [ntsync, staging-ntsync]
     steps:
       - name: Install Git
         run: pacman -Sy --noconfirm git
@@ -91,33 +70,9 @@ jobs:
           useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown user -R .
           echo "$WINE_VERSION" "$LUG_REV"
-          ./build-lug-wine.sh ntsync "$WINE_VERSION" "$LUG_REV"
+          ./build-lug-wine.sh "${{ matrix.preset }}" "$WINE_VERSION" "$LUG_REV"
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
           name: "arch-build"
-          path: ./output
-
-  build-arch-staging:
-    runs-on: ubuntu-latest
-    container: archlinux:latest
-    steps:
-      - name: Install Git
-        run: pacman -Sy --noconfirm git
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - name: Compile
-        env:
-          XDG_CACHE_HOME: /tmp/.cache
-        run: |
-          pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
-          useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-          chown user -R .
-          echo "$WINE_VERSION" "$LUG_REV"
-          ./build-lug-wine.sh staging-ntsync "$WINE_VERSION" "$LUG_REV"
-      - name: Upload Archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: "arch-staging-build"
           path: ./output
