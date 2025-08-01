@@ -1,8 +1,6 @@
 name: Build Artifacts
 
 on:
-  schedule:
-    - cron: "0 10 * * 5" # friday at 10:00 UTC
   workflow_dispatch:
   workflow_call:
     inputs:

@@ -1,5 +1,7 @@
 name: CI Testing
 on:
+  schedule:
+    - cron: "0 10 * * 5" # friday at 10:00 UTC
   push:
       paths-ignore:
         - 'README.md'
