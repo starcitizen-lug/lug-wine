@@ -11,5 +11,5 @@ jobs:
   ci_run:
     uses: starcitizen-lug/lug-wine/.github/workflows/build-artifacts.yml@main
     with:
-      wine_version: '10.12'
+      wine_version: '10.13'
       lug_rev: '1'
