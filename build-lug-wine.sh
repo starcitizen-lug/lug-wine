@@ -86,10 +86,6 @@ done
 
 echo "Copied LUG patches to ./wine-tkg-userpatches/"
 
-# advanced-customization.cfg settings
-sed -i 's/staging_userargs="-W ntdll-NtAlertThreadByThreadId"/staging_userargs="-W ntdll-NtAlertThreadByThreadId -W ntdll-ForceBottomUpAlloc -W ntdll-Hide_Wine_Exports"/' $TMP_BUILD_DIR/wine-tkg-profiles/advanced-customization.cfg
-sed -i 's/NOLIB32="false"/NOLIB32="wow64"/' $TMP_BUILD_DIR/wine-tkg-profiles/advanced-customization.cfg
-
 # customization.cfg settings
 case "$PRESET" in
   staging*)
