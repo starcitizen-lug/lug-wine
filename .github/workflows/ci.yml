@@ -5,6 +5,7 @@ on:
   push:
       paths-ignore:
         - 'README.md'
+        - '.github/workflows/**'
   pull_request:
 
 jobs:
