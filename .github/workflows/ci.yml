@@ -7,10 +7,10 @@ on:
         - 'README.md'
         - '.github/workflows/**'
   pull_request:
-
+  workflow_dispatch:
 jobs:
   ci_run:
     uses: starcitizen-lug/lug-wine/.github/workflows/build-artifacts.yml@main
     with:
-      wine_version: '10.13'
+      wine_version: '10.14'
       lug_rev: '1'
