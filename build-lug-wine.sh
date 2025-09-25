@@ -68,6 +68,7 @@ cp "$CONFIG" "$TMP_BUILD_DIR"
 cd "$TMP_BUILD_DIR"
 
 patches=("10.2+_eac_fix"
+         "eac_locale"
          "dummy_dlls"
          "enables_dxvk-nvapi"
          "nvngx_dlls"
