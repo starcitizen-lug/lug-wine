@@ -13,30 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Download Debian Artifact
+      - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: "debian-fsync-build"
-          path: ./debian
-      - name: Download Debian Staging Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: "debian-staging-fsync-build"
-          path: ./debian-staging
-      - name: Download Arch Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: "arch-ntsync-build"
-          path: ./arch
-      - name: Download Arch Staging Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: "arch-staging-ntsync-build"
-          path: ./arch-staging
+          path: ./out
+          merge-multiple: true
       - name: Find tag
         id: find
         shell: bash {0}
         run: |
+          echo "$(ls ./out)"
           file="$(find . -name '*.tar.gz' | head -n1)"
           version="$(echo $file | grep -oE '[0-9]+\.[0-9]+(-[0-9]+)?')"
           echo "version: $version"
@@ -46,9 +32,6 @@ jobs:
         with:
           tag_name: ${{ steps.find.outputs.NEW_TAG }}
           files: |
-            ./debian/*.tar.gz
-            ./debian-staging/*.tar.gz
-            ./arch/*.tar.gz
-            ./arch-staging/*.tar.gz
+            ./out/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

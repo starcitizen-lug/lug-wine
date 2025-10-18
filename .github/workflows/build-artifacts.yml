@@ -25,16 +25,10 @@ jobs:
         include:
           - os: debian
             image: debian:11
-            preset: fsync
+            preset: default
           - os: debian
             image: debian:11
-            preset: staging-fsync
-          - os: arch
-            image: archlinux:latest
-            preset: ntsync
-          - os: arch
-            image: archlinux:latest
-            preset: staging-ntsync
+            preset: staging-default
     container:
       image: ${{ matrix.image }}
     env:

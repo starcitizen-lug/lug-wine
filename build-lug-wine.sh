@@ -36,6 +36,12 @@ PRESET="$1"
 shift || true
 
 case "$PRESET" in
+  default)
+    CONFIG="lug-wine-tkg.cfg"
+    ;;
+  staging-default)
+    CONFIG="lug-wine-tkg-staging.cfg"
+    ;;
   fsync)
     CONFIG="lug-wine-tkg-fsync.cfg"
     ;;
@@ -49,7 +55,7 @@ case "$PRESET" in
     CONFIG="lug-wine-tkg-staging-ntsync.cfg"
     ;;
   *)
-    echo "Usage: $0 {fsync|ntsync|staging-fsync|staging-ntsync} [build args...]"
+    echo "Usage: $0 {default|staging-default|fsync|ntsync|staging-fsync|staging-ntsync} [build args...]"
     exit 1
     ;;
 esac
