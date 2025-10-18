@@ -37,10 +37,10 @@ shift || true
 
 case "$PRESET" in
   default)
-    CONFIG="lug-wine-tkg.cfg"
+    CONFIG="lug-wine-tkg-default.cfg"
     ;;
   staging-default)
-    CONFIG="lug-wine-tkg-staging.cfg"
+    CONFIG="lug-wine-tkg-staging-default.cfg"
     ;;
   fsync)
     CONFIG="lug-wine-tkg-fsync.cfg"
