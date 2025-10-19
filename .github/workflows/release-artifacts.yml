@@ -7,7 +7,7 @@ jobs:
   build:
     uses: starcitizen-lug/lug-wine/.github/workflows/build-artifacts.yml@main
     with:
-      wine_version: '10.16'
+      wine_version: '10.17'
       lug_rev: '1'
   release:
     runs-on: ubuntu-latest

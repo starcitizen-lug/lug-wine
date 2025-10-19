@@ -24,10 +24,10 @@ jobs:
       matrix:
         include:
           - os: debian
-            image: debian:11
+            image: debian:12
             preset: default
           - os: debian
-            image: debian:11
+            image: debian:12
             preset: staging-default
     container:
       image: ${{ matrix.image }}
@@ -52,7 +52,7 @@ jobs:
         shell: bash {0}
         run: |
           if [[ "${{ matrix.os }}" == "debian" ]]; then
-            apt-get install -y aptitude
+            apt-get install -y aptitude sudo
           elif [[ "${{ matrix.os }}" == "arch" ]]; then
             pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
             useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
