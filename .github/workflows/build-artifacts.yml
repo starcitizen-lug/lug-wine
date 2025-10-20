@@ -23,11 +23,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: debian
-            image: debian:12
+          - os: ubuntu
+            image: ubuntu:22.04
             preset: default
-          - os: debian
-            image: debian:12
+          - os: ubuntu
+            image: ubuntu:22.04
             preset: staging-default
     container:
       image: ${{ matrix.image }}
@@ -39,7 +39,7 @@ jobs:
       - name: Install Git
         shell: bash {0}
         run: |
-          if [[ "${{ matrix.os }}" == "debian" ]]; then
+          if [[ "${{ matrix.os }}" == "ubuntu" ]]; then
             apt-get update
             apt-get install -y git
           elif [[ "${{ matrix.os }}" == "arch" ]]; then
@@ -51,7 +51,7 @@ jobs:
       - name: Compilation
         shell: bash {0}
         run: |
-          if [[ "${{ matrix.os }}" == "debian" ]]; then
+          if [[ "${{ matrix.os }}" == "ubuntu" ]]; then
             apt-get install -y aptitude sudo
           elif [[ "${{ matrix.os }}" == "arch" ]]; then
             pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
