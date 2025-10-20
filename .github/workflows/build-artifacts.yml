@@ -36,14 +36,16 @@ jobs:
       XDG_CACHE_HOME: /tmp/.cache
       TZ: UTC
     steps:
-      - name: Install Git
+      - name: Prepare Container
         shell: bash {0}
         run: |
           if [[ "${{ matrix.os }}" == "ubuntu" ]]; then
             apt-get update
-            apt-get install -y git
+            apt-get install -y git aptitude sudo
           elif [[ "${{ matrix.os }}" == "arch" ]]; then
-            pacman -Sy --noconfirm git
+            pacman -Syu --noconfirm git base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
+            useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+            chown user -R .
           fi
       - uses: actions/checkout@v4
         with:
@@ -51,13 +53,6 @@ jobs:
       - name: Compilation
         shell: bash {0}
         run: |
-          if [[ "${{ matrix.os }}" == "ubuntu" ]]; then
-            apt-get install -y aptitude sudo
-          elif [[ "${{ matrix.os }}" == "arch" ]]; then
-            pacman -Syu --noconfirm base-devel sudo git freetype2 graphite harfbuzz libpng fontconfig jack2
-            useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-            chown user -R .
-          fi
           echo "$WINE_VERSION" "$LUG_REV"
           ./build-lug-wine.sh "${{ matrix.preset }}" "$WINE_VERSION" "$LUG_REV"
       - name: Upload Archive
