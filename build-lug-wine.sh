@@ -85,6 +85,7 @@ patches=("10.2+_eac_fix"
          "silence-sc-unsupported-os"
          "reg_show_wine"
          "eac_60101_timeout"
+         "9196_process_idle_event_client_side"
 )
 
 mkdir -p ./wine-tkg-userpatches
