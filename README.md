@@ -6,10 +6,10 @@ The easiest way to install these runners is with the [LUG Helper](https://github
 
 # Versions
 
-**lug-wine-tkg-git**
+**lug-wine-tkg-git**  
 Standard Wine built for maximum compatibility. Works with glibc as old as v2.35
 
-**lug-wine-tkg-staging-git**
+**lug-wine-tkg-staging-git**  
 Wine plus experimental staging patches. Works with glibc as old as v2.35
 
 **lug-wine-tkg-fsync-git**  
