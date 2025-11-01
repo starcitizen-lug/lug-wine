@@ -7,8 +7,8 @@ jobs:
   build:
     uses: starcitizen-lug/lug-wine/.github/workflows/build-artifacts.yml@main
     with:
-      wine_version: '10.17'
-      lug_rev: '2'
+      wine_version: '10.18'
+      lug_rev: '1'
   release:
     runs-on: ubuntu-latest
     needs: build
@@ -30,6 +30,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          make_latest: false
           tag_name: ${{ steps.find.outputs.NEW_TAG }}
           files: |
             ./out/*.tar.gz
