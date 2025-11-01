@@ -29,12 +29,6 @@ jobs:
           - os: ubuntu
             image: ubuntu:22.04
             preset: staging-default
-          - os: ubuntu
-            image: ubuntu:22.04
-            preset: fsync
-          - os: ubuntu
-            image: ubuntu:22.04
-            preset: staging-fsync
     container:
       image: ${{ matrix.image }}
     env:
