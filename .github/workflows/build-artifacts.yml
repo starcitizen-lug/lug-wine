@@ -2,6 +2,17 @@ name: Build Artifacts
 
 on:
   workflow_dispatch:
+    inputs:
+      wine_version:
+        description: "Select the wine version to pin the build to"
+        required: true
+        default: ''
+        type: string
+      lug_rev:
+        description: "Select the lug revision"
+        required: true
+        default: '1'
+        type: string
   workflow_call:
     inputs:
       wine_version:
