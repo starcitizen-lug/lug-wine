@@ -3,6 +3,8 @@ on:
   schedule:
     - cron: "0 10 * * 5" # friday at 10:00 UTC
   push:
+      tags-ignore:
+        - '*'
       paths-ignore:
         - 'README.md'
         - '.github/workflows/**'
