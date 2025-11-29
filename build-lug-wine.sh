@@ -85,6 +85,7 @@ patches=("10.2+_eac_fix"
          "silence-sc-unsupported-os"
          "reg_show_wine"
          "eac_60101_timeout"
+         "unopenable-device-is-bad"
 )
 
 mkdir -p ./wine-tkg-userpatches
