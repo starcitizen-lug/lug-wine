@@ -12,6 +12,7 @@ jobs:
     name: Parse tag
     runs-on: ubuntu-latest
     outputs:
+      lug_release_tag: ${{ steps.parse.outputs.lug_release_tag }}
       wine_version: ${{ steps.parse.outputs.wine_version }}
       lug_rev: ${{ steps.parse.outputs.lug_rev }}
     steps:
@@ -23,6 +24,8 @@ jobs:
           wine_version="${tag%-*}"
           lug_rev="${tag##*-}"
           echo "Parsed tag: $tag -> wine_version=$wine_version lug_rev=$lug_rev"
+
+          echo "lug_release_tag=$tag" >> $GITHUB_OUTPUT
           echo "wine_version=$wine_version" >> $GITHUB_OUTPUT
           echo "lug_rev=$lug_rev" >> $GITHUB_OUTPUT
   build:
@@ -33,27 +36,18 @@ jobs:
       lug_rev: ${{ needs.parse.outputs.lug_rev }}
   release:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [parse, build]
     steps:
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./out
           merge-multiple: true
-      - name: Find tag
-        id: find
-        shell: bash {0}
-        run: |
-          echo "$(ls ./out)"
-          file="$(find . -name '*.tar.gz' | head -n1)"
-          version="$(echo $file | grep -oE '[0-9]+\.[0-9]+(-[0-9]+)?')"
-          echo "version: $version"
-          echo "NEW_TAG=$version" >> $GITHUB_OUTPUT
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           make_latest: false
-          tag_name: ${{ steps.find.outputs.NEW_TAG }}
+          tag_name: ${{ needs.parse.outputs.lug_release_tag }}
           files: |
             ./out/lug-wine*.tar.gz
         env:
