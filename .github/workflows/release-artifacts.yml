@@ -5,6 +5,7 @@ on:
     tags:
       - '[0-9][0-9].[0-9]-[0-9]'
       - '[0-9][0-9].[0-9][0-9]-[0-9]'
+      - '[0-9][0-9].[0-9]-rc[0-9]-[0-9]'
 
 jobs:
   parse:
@@ -19,7 +20,7 @@ jobs:
         shell: bash {0}
         run: |
           tag="${GITHUB_REF#refs/tags/}"
-          wine_version="${tag%%-*}"
+          wine_version="${tag%-*}"
           lug_rev="${tag##*-}"
           echo "Parsed tag: $tag -> wine_version=$wine_version lug_rev=$lug_rev"
           echo "wine_version=$wine_version" >> $GITHUB_OUTPUT
@@ -54,6 +55,6 @@ jobs:
           make_latest: false
           tag_name: ${{ steps.find.outputs.NEW_TAG }}
           files: |
-            ./out/*.tar.gz
+            ./out/lug-wine*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
