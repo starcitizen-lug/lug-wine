@@ -108,29 +108,5 @@ esac
 
 yes|./non-makepkg-build.sh --config "$TMP_BUILD_DIR/$CONFIG" "$@"
 echo "Build completed successfully."
-
-VKD3D_BUILD_DIR="../vkd3d/build/vkd3d-proton-master"
-if [ -d $VKD3D_BUILD_DIR ]; then
-  built_dir="$(find ./non-makepkg-builds -maxdepth 1 -type d -name 'wine-*' -printf '%f\n' | head -n1)"
-  if [[ -z "$built_dir" ]]; then
-    echo "No build directory found in non-makepkg-builds/"
-    exit 1
-  fi
-
-  for f in "$VKD3D_BUILD_DIR"/x64/*; do
-    ./non-makepkg-builds/"$built_dir"/bin/winebuild "$f" --builtin
-  done
-
-  for f in "$VKD3D_BUILD_DIR"/x86/*; do
-    ./non-makepkg-builds/"$built_dir"/bin/winebuild "$f" --builtin
-  done
-
-  cp "$VKD3D_BUILD_DIR"/x64/* "./non-makepkg-builds/$built_dir/lib/wine/x86_64-windows/"
-  cp "$VKD3D_BUILD_DIR"/x86/* "./non-makepkg-builds/$built_dir/lib/wine/i386-windows/"
-else
-  echo "No VKD3D_BUILD_DIR found"
-fi
-
-
 echo "Packaging build artifact..."
 package_artifact

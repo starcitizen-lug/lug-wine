@@ -29,39 +29,7 @@ env:
   WINE_VERSION: ${{ inputs.wine_version || github.event.inputs.wine_version }}
   LUG_REV: ${{ inputs.lug_rev || github.event.inputs.lug_rev }}
 jobs:
-  build_vkd3d_proton:
-    runs-on: ubuntu-latest
-    container:
-      image: ubuntu:latest
-    env:
-      DEBIAN_FRONTEND: noninteractive
-      TZ: UTC
-    steps:
-      - name: Prepare Container
-        shell: bash {0}
-        run: |
-          apt-get update
-          apt-get install -y git build-essential meson ninja-build vulkan-tools libvulkan-dev mingw-w64 mingw-w64-tools glslang-tools
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - name: Build vkd3d-proton
-        shell: bash {0}
-        run: |
-          set -eux
-          git clone --depth 1 --recursive https://github.com/HansKristian-Work/vkd3d-proton.git
-          ls
-          cd vkd3d-proton
-          git apply ../patches/vkd3d-proton/fix_d3d12.patch
-          ./package-release.sh master build --no-package
-          tar -czf ../vkd3d-proton.tar.gz build
-      - name: Upload vkd3d artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: vkd3d-proton-build
-          path: ./vkd3d-proton.tar.gz
   build:
-    needs: build_vkd3d_proton
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -94,22 +62,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Download vkd3d-proton artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: vkd3d-proton-build
-          path: ./vkd3d
-      - name: Extract vkd3d-proton artifact
-        shell: bash {0}
-        run: |
-          if [ -f ./vkd3d/vkd3d-proton.tar.gz ]; then
-            mkdir -p ./vkd3d/build
-            tar -xzf ./vkd3d/vkd3d-proton.tar.gz -C ./vkd3d
-            echo "vkd3d artifact extracted to ./vkd3d"
-          else
-            echo "No vkd3d artifact found; continuing without it"
-          fi
-          ls vkd3d/build/vkd3d-proton-master
       - name: Compilation
         shell: bash {0}
         run: |
