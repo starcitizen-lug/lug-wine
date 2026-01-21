@@ -4,6 +4,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WINE_TKG_SRC="$SCRIPT_DIR/wine-tkg-git"
+PROTON_TKG_SRC="$SCRIPT_DIR/wine-tkg-git/proton-tkg"
 PATCHES_DIR="$SCRIPT_DIR/patches/wine"
 TMP_BUILD_DIR="$SCRIPT_DIR/wine-tkg-build-tmp-$(mktemp -u XXXXXX)"
 
@@ -15,9 +16,11 @@ invalid_args=-1
 preset="default"
 wine_version=""
 lug_rev="-1"
+build_type="wine"
 
-patches=("10.2+_eac_fix"
-         "eac_locale"
+
+# Common patches applied to BOTH Wine and Proton builds
+common_patches=("eac_locale"
          "dummy_dlls"
          "enables_dxvk-nvapi"
          "nvngx_dlls"
@@ -32,6 +35,19 @@ patches=("10.2+_eac_fix"
          "sc_gpumem"
 )
 
+# Patches specific to Wine builds (includes common patches)
+# the 10.2+_eac_fix patch may be needed when Proton moves to a Wine 11.0+ base
+wine_patches=("10.2+_eac_fix"
+        "${common_patches[@]}"
+)
+
+# Patches specific to Proton builds (includes common patches)
+proton_patches=("${common_patches[@]}"
+)
+
+# Temporary patches passed via --adhoc argument
+adhoc_patches=()
+
 cleanup() {
   rm -rf "$TMP_BUILD_DIR"
   echo "Cleaned up temporary build directory."
@@ -40,7 +56,7 @@ trap cleanup EXIT
 
 parse_adhoc() {
   IFS=',' read -r -a adhoc <<< "$1"
-  patches+=("${adhoc[@]}")
+  adhoc_patches+=("${adhoc[@]}")
 }
 
 # prepare preset
@@ -56,29 +72,75 @@ prepare_preset() {
       export config="lug-wine-tkg-staging-wayland.cfg"
       parse_adhoc "default-to-wayland"
       ;;
+    proton)
+      export config="lug-proton-tkg-default.cfg"
+      build_type="proton"
+      ;;
     *)
-      echo "Usage: $0 {default|staging-default|staging-wayland} [build args...]"
+      echo "Usage: $0 {default|staging-default|staging-wayland|proton} [build args...]"
       exit $invalid_args
       ;;
   esac
 
-  cp -a "$WINE_TKG_SRC/wine-tkg-git" "$TMP_BUILD_DIR/"
-  echo "Created temporary build directory: $TMP_BUILD_DIR"
+  if [ "$build_type" = "proton" ]; then
+    patches=("${proton_patches[@]}" "${adhoc_patches[@]}")
+  else
+    patches=("${wine_patches[@]}" "${adhoc_patches[@]}")
+  fi
 
-  cp "./config/$config" "$TMP_BUILD_DIR"
+  if [ "$build_type" = "proton" ]; then
+    # Proton builds: proton-tkg.sh expects wine-tkg-git to be at ../wine-tkg-git
+    # So we copy the entire wine-tkg-git structure and cd into proton-tkg
+    mkdir -p "$TMP_BUILD_DIR"
+    cp -a "$WINE_TKG_SRC"/* "$TMP_BUILD_DIR/"
+    echo "Created temporary build directory: $TMP_BUILD_DIR"
 
-  cd "$TMP_BUILD_DIR"
+    # Copy config to proton-tkg subdirectory
+    cp "$SCRIPT_DIR/config/$config" "$TMP_BUILD_DIR/proton-tkg/"
 
-  mkdir -p ./wine-tkg-userpatches
-  for file in "${patches[@]}"; do
-    cp "$PATCHES_DIR/$file.patch" "./wine-tkg-userpatches/${file}.mypatch"
-  done
+    cd "$TMP_BUILD_DIR/proton-tkg"
 
-  echo "Copied LUG patches to ./wine-tkg-userpatches/"
+    # Wine patches go to wine-tkg-git/wine-tkg-userpatches (not proton-tkg-userpatches)
+    # proton-tkg-userpatches is for proton-specific patches (.myprotonpatch)
+    mkdir -p "$TMP_BUILD_DIR/wine-tkg-git/wine-tkg-userpatches"
+    
+    # Proton Override Logic
+    # 1. Check patches/proton/ (Override)
+    # 2. Check patches/wine/ (Fallback)
+    PROTON_PATCH_DIR="$SCRIPT_DIR/patches/proton"
+    
+    for file in "${patches[@]}"; do
+      if [ -f "$PROTON_PATCH_DIR/$file.patch" ]; then
+          echo "Applying Proton override for: $file"
+          cp "$PROTON_PATCH_DIR/$file.patch" "$TMP_BUILD_DIR/wine-tkg-git/wine-tkg-userpatches/${file}.mypatch"
+      else
+          cp "$PATCHES_DIR/$file.patch" "$TMP_BUILD_DIR/wine-tkg-git/wine-tkg-userpatches/${file}.mypatch"
+      fi
+    done
 
-  if [ -n "$wine_version" ]; then
-    sed -i "s/staging_version=\"\"/staging_version=\"v$wine_version\"/" "$TMP_BUILD_DIR/$config"
-    sed -i "s/plain_version=\"\"/plain_version=\"wine-$wine_version\"/" "$TMP_BUILD_DIR/$config"
+    echo "Copied LUG patches to wine-tkg-git/wine-tkg-userpatches/"
+
+  else
+    # Wine builds: copy wine-tkg-git directory contents
+    mkdir -p "$TMP_BUILD_DIR"
+    cp -a "$WINE_TKG_SRC/wine-tkg-git"/* "$TMP_BUILD_DIR/"
+    echo "Created temporary build directory: $TMP_BUILD_DIR"
+
+    cp "$SCRIPT_DIR/config/$config" "$TMP_BUILD_DIR/"
+
+    cd "$TMP_BUILD_DIR"
+
+    mkdir -p ./wine-tkg-userpatches
+    for file in "${patches[@]}"; do
+      cp "$PATCHES_DIR/$file.patch" "./wine-tkg-userpatches/${file}.mypatch"
+    done
+
+    echo "Copied LUG patches to ./wine-tkg-userpatches/"
+
+    if [ -n "$wine_version" ]; then
+      sed -i "s/staging_version=\"\"/staging_version=\"v$wine_version\"/" "$TMP_BUILD_DIR/$config"
+      sed -i "s/plain_version=\"\"/plain_version=\"wine-$wine_version\"/" "$TMP_BUILD_DIR/$config"
+    fi
   fi
 }
 
@@ -87,22 +149,68 @@ build_lug_wine() {
   echo "Build completed successfully."
 }
 
+build_lug_proton() {
+  # proton-tkg.sh accepts a config path as $1 to set _EXT_CONFIG_PATH
+  # We're in $TMP_BUILD_DIR/proton-tkg, config was copied here
+  
+  # Force Docker container usage for Sniper runtime
+  sed -i 's/_no_container="true"/_no_container="false"/' proton-tkg.sh
+  
+  # Fix for Docker on SELinux systems
+  # If SELinux is enabled, we need to pass --relabel-volumes to configure.sh
+  if command -v selinuxenabled >/dev/null 2>&1 && selinuxenabled; then
+      echo "SELinux detected: Enabling --relabel-volumes for Proton build container..."
+      sed -i 's|\.\./configure\.sh|\.\./configure\.sh --relabel-volumes|' proton-tkg.sh
+  fi
+  
+  yes|./proton-tkg.sh "./$config" "$@"
+  echo "Proton build completed successfully."
+}
+
+
 package_artifact() {
   echo "Packaging build artifact..."
-  local workdir lug_name archive_path
-  local built_dir
-  built_dir="$(find ./non-makepkg-builds -maxdepth 1 -type d -name 'wine-*' -printf '%f\n' | head -n1)"
-  if [[ -z "$built_dir" ]]; then
-    echo "No build directory found in non-makepkg-builds/"
-    exit 1
+  local lug_name archive_path built_dir search_dir temp_subdir
+
+  if [ "$build_type" = "proton" ]; then
+    search_dir="./built"
+    # Find the directory starting with proton_tkg_
+    built_dir="$(find "$search_dir" -maxdepth 1 -type d -name 'proton_tkg_*' -printf '%f\n' | head -n1)"
+    
+    if [[ -z "$built_dir" ]]; then
+       echo "No build directory found in $search_dir/"
+       exit 1
+    fi
+    local version_part="${built_dir#proton_tkg_}"
+    lug_name="lug-proton-${version_part}${lug_rev}"
+    temp_subdir="lug-proton-tkg"
+  else
+    search_dir="./non-makepkg-builds"
+    # Find the directory starting with wine-
+    built_dir="$(find "$search_dir" -maxdepth 1 -type d -name 'wine-*' -printf '%f\n' | head -n1)"
+    
+    if [[ -z "$built_dir" ]]; then
+       echo "No build directory found in $search_dir/"
+       exit 1
+    fi
+    lug_name="lug-$(echo "$built_dir" | cut -d. -f1-2)${lug_rev}"
+    temp_subdir="lug-wine-tkg"
   fi
-  lug_name="lug-$(echo "$built_dir" | cut -d. -f1-2)${lug_rev}"
-  archive_path="/tmp/lug-wine-tkg/${lug_name}.tar.gz"
+
+  # Common packaging logic
+  archive_path="/tmp/${temp_subdir}/${lug_name}.tar.gz"
   mkdir -p "$(dirname "$archive_path")"
-  mv "./non-makepkg-builds/$built_dir" "./non-makepkg-builds/$lug_name"
-  tar --remove-files -czf "$archive_path" -C "./non-makepkg-builds" "$lug_name"
+  
+  # Rename the build dir to the lug name
+  mv "${search_dir}/${built_dir}" "${search_dir}/${lug_name}"
+  
+  # Tar it up
+  tar --remove-files -czf "$archive_path" -C "${search_dir}" "$lug_name"
+  
+  # Move to output
   mkdir -p "$SCRIPT_DIR/output"
   mv "$archive_path" "$SCRIPT_DIR/output/"
+  
   echo "Build artifact collected in $SCRIPT_DIR/output/${lug_name}.tar.gz"
 }
 
@@ -113,7 +221,9 @@ Usage: ./build-lug-wine <options>
   -h, --help                    Display this help message and exit
   -v, --version                 Wine version to build e.g. "10.23" (default: latest git)
   -a, --adhoc                   Comma-separated list of adhoc patches to apply
-  -p, --preset                  Select a preset configuration (default|staging-default)
+  -p, --preset                  Select a preset configuration:
+                                  Wine:   default, staging-default, staging-wayland
+                                  Proton: proton-default
   -o, --output                  Output directory for the build artifact (default: ./output)
   -r, --revision                Revision number for the build (default: 1)
 "
@@ -157,5 +267,9 @@ if [ "$#" -gt 0 ]; then
 fi
 
 prepare_preset
-build_lug_wine
+if [ "$build_type" = "proton" ]; then
+  build_lug_proton
+else
+  build_lug_wine
+fi
 package_artifact
