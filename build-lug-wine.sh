@@ -163,6 +163,10 @@ build_lug_proton() {
       sed -i 's|\.\./configure\.sh|\.\./configure\.sh --relabel-volumes|' proton-tkg.sh
   fi
   
+  # Even with _no_autoinstall="true", proton-tkg.sh will not move the artifact to ./built
+  # if it detects Steam. We must force it to ignore Steam to get the build in the expected location.
+  sed -i 's/_no_steampath="false"/_no_steampath="y"/' proton-tkg.sh
+
   yes|./proton-tkg.sh "./$config" "$@"
   echo "Proton build completed successfully."
 }
@@ -223,7 +227,7 @@ Usage: ./build-lug-wine <options>
   -a, --adhoc                   Comma-separated list of adhoc patches to apply
   -p, --preset                  Select a preset configuration:
                                   Wine:   default, staging-default, staging-wayland
-                                  Proton: proton-default
+                                  Proton: proton
   -o, --output                  Output directory for the build artifact (default: ./output)
   -r, --revision                Revision number for the build (default: 1)
 "
