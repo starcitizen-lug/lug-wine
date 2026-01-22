@@ -142,6 +142,12 @@ prepare_preset() {
       sed -i "s/plain_version=\"\"/plain_version=\"wine-$wine_version\"/" "$TMP_BUILD_DIR/$config"
     fi
   fi
+  
+  # Inject Proton "bleeding tag" for Proton builds to tag builds.
+  if [ "$build_type" = "proton" ] && [ -n "$wine_version" ]; then
+    sed -i "s|^_bleeding_tag=.*|_bleeding_tag=\"$wine_version\"|" "$TMP_BUILD_DIR/proton-tkg/$config"
+    echo "Set _bleeding_tag to: $wine_version"
+  fi
 }
 
 build_lug_wine() {
@@ -223,7 +229,7 @@ usage() {
 Usage: ./build-lug-wine <options>
 ./build-lug-wine -p default -v 10.23 -r 1 -a default-to-wayland
   -h, --help                    Display this help message and exit
-  -v, --version                 Wine version to build e.g. "10.23" (default: latest git)
+  -v, --version                 Wine version (for Wine) or Proton tag (for Proton) to build (default: latest git)
   -a, --adhoc                   Comma-separated list of adhoc patches to apply
   -p, --preset                  Select a preset configuration:
                                   Wine:   default, staging-default, staging-wayland

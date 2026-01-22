@@ -91,7 +91,7 @@ jobs:
       - name: Compilation
         shell: bash {0}
         run: |
-          ./build-lug-wine.sh --preset proton-default --revision "$LUG_REV"
+          ./build-lug-wine.sh --preset proton-default --version "$WINE_VERSION" --revision "$LUG_REV"
       - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
