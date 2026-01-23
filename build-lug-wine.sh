@@ -118,6 +118,12 @@ prepare_preset() {
       fi
     done
 
+    # Inject Proton "bleeding tag" for Proton builds to tag builds.
+    if [ -n "$wine_version" ]; then
+      sed -i "s|^_bleeding_tag=.*|_bleeding_tag=\"$wine_version\"|" "$TMP_BUILD_DIR/proton-tkg/$config"
+      echo "Set _bleeding_tag to: $wine_version"
+    fi
+
     echo "Copied LUG patches to wine-tkg-git/wine-tkg-userpatches/"
 
   else
@@ -143,11 +149,7 @@ prepare_preset() {
     fi
   fi
   
-  # Inject Proton "bleeding tag" for Proton builds to tag builds.
-  if [ "$build_type" = "proton" ] && [ -n "$wine_version" ]; then
-    sed -i "s|^_bleeding_tag=.*|_bleeding_tag=\"$wine_version\"|" "$TMP_BUILD_DIR/proton-tkg/$config"
-    echo "Set _bleeding_tag to: $wine_version"
-  fi
+
 }
 
 build_lug_wine() {
