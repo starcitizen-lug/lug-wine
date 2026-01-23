@@ -1,6 +1,6 @@
 [submodule "patches"]
 	path = patches
-	url = https://github.com/ProjectSynchro/patches.git
+	url = https://github.com/starcitizen-lug/patches
 [submodule "wine-tkg-git"]
 	path = wine-tkg-git
 	url = https://github.com/Frogging-Family/wine-tkg-git/
