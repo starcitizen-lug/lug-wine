@@ -4,10 +4,12 @@ Wine runners based on [TKG builds](https://github.com/Frogging-Family/wine-tkg-g
 # Installation
 The easiest way to install these runners is with the [LUG Helper](https://github.com/starcitizen-lug/lug-helper).
 
-# Versions
+> [!NOTE]
+> Minimum `glibc` requirement for these runners: `2.35` released 2022-02-03
 
+# Versions
 **lug-wine-tkg-git**  
-Standard Wine built for maximum compatibility. Works with glibc as old as v2.35
+Standard Wine built for maximum compatibility.
 
 **lug-wine-tkg-staging-git**  
-Wine plus experimental staging patches. Works with glibc as old as v2.35
+Wine plus experimental staging patches.
