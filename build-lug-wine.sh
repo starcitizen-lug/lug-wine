@@ -30,8 +30,8 @@ patches=("10.2+_eac_fix"
          "unopenable-device-is-bad"
          "append_cmd"
          "sc_gpumem"
-         "0001-wineopenxr_add.patch"
-         "0002-wineopenxr_enable.patch"
+         "0001-wineopenxr_add"
+         "0002-wineopenxr_enable"
 )
 
 cleanup() {
