@@ -35,10 +35,10 @@ jobs:
       matrix:
         include:
           - os: ubuntu
-            image: ubuntu:22.04
+            image: ubuntu:24.04
             preset: default
           - os: ubuntu
-            image: ubuntu:22.04
+            image: ubuntu:24.04
             preset: staging-default
     container:
       image: ${{ matrix.image }}
