@@ -16,6 +16,8 @@ preset="default"
 wine_version=""
 lug_rev="-1"
 
+vkd3d_build_dir="$SCRIPT_DIR/vkd3d-proton/build/vkd3d-proton-master"
+
 patches=("10.2+_eac_fix"
          "eac_locale"
          "dummy_dlls"
@@ -25,7 +27,8 @@ patches=("10.2+_eac_fix"
          "0079-HACK-winewayland-add-support-for-picking-primary-mon"
          "0088-fixup-HACK-winewayland-add-support-for-picking-prima"
          "silence-sc-unsupported-os"
-         "reg_show_wine"
+         "hidewineexports"
+         "reg_hide_wine"
          "eac_60101_timeout"
          "unopenable-device-is-bad"
          "append_cmd"
@@ -43,6 +46,29 @@ trap cleanup EXIT
 parse_adhoc() {
   IFS=',' read -r -a adhoc <<< "$1"
   patches+=("${adhoc[@]}")
+}
+
+override_to_vkd3d_proton() {
+  if [ -d $vkd3d_build_dir ]; then
+    built_dir="$(find ./non-makepkg-builds -maxdepth 1 -type d -name 'wine-*' -printf '%f\n' | head -n1)"
+    if [[ -z "$built_dir" ]]; then
+      echo "No build directory found in non-makepkg-builds/"
+      exit 1
+    fi
+
+    for f in "$vkd3d_build_dir"/x64/*; do
+      ./non-makepkg-builds/"$built_dir"/bin/winebuild "$f" --builtin
+    done
+
+    for f in "$vkd3d_build_dir"/x86/*; do
+      ./non-makepkg-builds/"$built_dir"/bin/winebuild "$f" --builtin
+    done
+
+    cp "$vkd3d_build_dir"/x64/* "./non-makepkg-builds/$built_dir/lib/wine/x86_64-windows/"
+    cp "$vkd3d_build_dir"/x86/* "./non-makepkg-builds/$built_dir/lib/wine/i386-windows/"
+  else
+    echo "No vkd3d_build_dir found"
+  fi
 }
 
 # prepare preset
@@ -89,6 +115,10 @@ build_lug_wine() {
   echo "Build completed successfully."
 }
 
+post_build_add_overrides() {
+  override_to_vkd3d_proton
+}
+
 package_artifact() {
   echo "Packaging build artifact..."
   local workdir lug_name archive_path
@@ -118,6 +148,7 @@ Usage: ./build-lug-wine <options>
   -p, --preset                  Select a preset configuration (default|staging-default)
   -o, --output                  Output directory for the build artifact (default: ./output)
   -r, --revision                Revision number for the build (default: 1)
+  -d, --vkd3d-proton-dir        Location of vkd3d-proton to apply
 "
 }
 
@@ -147,6 +178,10 @@ if [ "$#" -gt 0 ]; then
                 parse_adhoc "$2"
                 shift
                 ;;
+            --vkd3d-proton-dir | -d )
+                vkd3d_build_dir="$2"
+                shift
+                ;;
             * )
                 printf "%s: Invalid option '%s'\n" "$0" "$1"
                 usage
@@ -160,4 +195,5 @@ fi
 
 prepare_preset
 build_lug_wine
+post_build_add_overrides
 package_artifact

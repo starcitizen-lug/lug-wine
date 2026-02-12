@@ -1,0 +1,37 @@
+name: Build vkd3d-proton
+
+on:
+  workflow_call:
+
+jobs:
+  build_vkd3d_proton:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:24.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      TZ: UTC
+    steps:
+      - name: Prepare Container
+        shell: bash {0}
+        run: |
+          apt-get update
+          apt-get install -y git build-essential meson ninja-build vulkan-tools libvulkan-dev mingw-w64 mingw-w64-tools glslang-tools
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Build vkd3d-proton
+        shell: bash {0}
+        run: |
+          set -eux
+          git clone --depth 1 --recursive https://github.com/HansKristian-Work/vkd3d-proton.git
+          ls
+          cd vkd3d-proton
+          git apply ../patches/vkd3d-proton/fix_d3d12.patch
+          ./package-release.sh master build --no-package
+          tar -czf ../vkd3d-proton.tar.gz build
+      - name: Upload vkd3d artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vkd3d-proton-build
+          path: ./vkd3d-proton.tar.gz
