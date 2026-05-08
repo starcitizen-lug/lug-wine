@@ -39,12 +39,12 @@ jobs:
     needs: [parse, build]
     steps:
       - name: Download All Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: ./out
           merge-multiple: true
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           make_latest: false
           tag_name: ${{ needs.parse.outputs.lug_release_tag }}

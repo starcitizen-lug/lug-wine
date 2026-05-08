@@ -59,7 +59,7 @@ jobs:
             useradd user -G wheel && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
             chown user -R .
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Compilation
@@ -68,7 +68,7 @@ jobs:
           echo "$WINE_VERSION" "$LUG_REV"
           ./build-lug-wine.sh --preset "${{ matrix.preset }}" --version "$WINE_VERSION" --revision "$LUG_REV"
       - name: Upload Archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: "${{ matrix.os }}-${{ matrix.preset }}-build"
           path: ./output
