@@ -1,7 +1,7 @@
 name: CI Testing
 on:
   schedule:
-    - cron: "0 10 * * 5" # friday at 10:00 UTC
+    - cron: "0 10 * * 6" # saturday at 10:00 UTC
   push:
       branches:
       - main
