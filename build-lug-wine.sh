@@ -37,6 +37,7 @@ patches=("10.2+_eac_fix"
          "disable_syscall_dispatch"
          "systray-title"
          "winewayland-prefer-relative-pointer"
+         "winewayland-fullscreen-idle-inhibit"
 )
 
 cleanup() {
