@@ -24,8 +24,6 @@ patches=("10.2+_eac_fix"
          "enables_dxvk-nvapi"
          "nvngx_dlls"
          "cache-committed-size"
-         "0079-HACK-winewayland-add-support-for-picking-primary-mon"
-         "0088-fixup-HACK-winewayland-add-support-for-picking-prima"
          "silence-sc-unsupported-os"
          "reg_show_wine"
          "eac_60101_timeout"
@@ -37,6 +35,7 @@ patches=("10.2+_eac_fix"
          "disable_syscall_dispatch"
          "systray-title"
          "winewayland-prefer-relative-pointer"
+         "winewayland-guess-primary-output"
          "winewayland-fullscreen-idle-inhibit"
 )
 
@@ -87,8 +86,12 @@ prepare_preset() {
       export config="lug-wine-tkg-staging-wayland.cfg"
       parse_adhoc "default-to-wayland"
       ;;
+    wayland)
+      export config="lug-wine-tkg-wayland.cfg"
+      parse_adhoc "default-to-wayland"
+      ;;
     *)
-      echo "Usage: $0 {default|staging-default|staging-wayland} [build args...]"
+      echo "Usage: $0 {default|staging-default|staging-wayland|wayland} [build args...]"
       exit $invalid_args
       ;;
   esac
