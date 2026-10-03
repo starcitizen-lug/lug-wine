@@ -7,7 +7,7 @@ on:
       - main
       paths-ignore:
         - 'README.md'
-        - '.github/workflows/**'
+        - '.github/**'
   pull_request:
   workflow_dispatch:
 jobs:
