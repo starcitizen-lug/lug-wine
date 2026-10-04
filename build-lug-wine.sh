@@ -37,6 +37,7 @@ patches=("10.2+_eac_fix"
          "winewayland-prefer-relative-pointer"
          "winewayland-guess-primary-output"
          "winewayland-fullscreen-idle-inhibit"
+         "winewayland-systray"
 )
 
 cleanup() {
